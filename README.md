@@ -1,9 +1,12 @@
-# Dyn Python SDK - Developer Preview
+# Dyn Python SDK
 
 
-NOTE: This is a developer preview - we welcome your feedback!
+NOTE: This SDK is brand new - we welcome your feedback!
 Please reach out via pull request or GitHub issue.
 
+Install this package via:
+
+    pip install dyn-python
 
 Making DNS Updates as easy as:
 
