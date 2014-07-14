@@ -5,7 +5,7 @@ from distutils.core import setup
 version = '0.99'
 
 setup(
-    name="dyn",
+    name="dyn-python",
     version=version,
     keywords=["dyn", "dynect", "api", "dns", "traffic", "email", "messaging"],
     long_description=open(os.path.join(os.path.dirname(__file__),"README.md"), "r").read(),
