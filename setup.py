@@ -14,6 +14,7 @@ setup(
     author_email="clevine@dyn.com",
     url="https://github.com/dyninc/dyn-python",
     packages=['dyn'],
+    license="BSD 3-clause",
     classifiers=[
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',

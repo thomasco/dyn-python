@@ -111,3 +111,8 @@ For more comprehensive examples, check out the "examples" folder.
 # Known Issues
 
 * None yet
+
+# License
+
+BSD 3-clause
+
