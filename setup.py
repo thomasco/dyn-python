@@ -2,17 +2,17 @@ import os
 from distutils.core import setup
 
 # sync with __init__.py
-version = '0.1'
+version = '0.99'
 
 setup(
     name="dyn",
     version=version,
-    keywords=["dynect", "api", "dns"],
+    keywords=["dyn", "dynect", "api", "dns", "traffic", "email", "messaging"],
     long_description=open(os.path.join(os.path.dirname(__file__),"README.md"), "r").read(),
     description="Dyn Python SDK",
-    author="Cole Tuininga",
-    author_email="ctuininga@dyn.com",
-    url="https://github.com/dyninc/dyn-py",
+    author="Carl Levine, Sunny Gleason, Cole Tuininga",
+    author_email="clevine@dyn.com",
+    url="https://github.com/dyninc/dyn-python",
     packages=['dyn'],
     classifiers=[
         'Programming Language :: Python :: 2',

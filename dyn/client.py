@@ -1,4 +1,4 @@
-import sys, time
+import sys, time, urllib
 try:
     import json
 except ImportError:
@@ -10,6 +10,8 @@ except ImportError:
 if sys.version_info[0] == 2:
     from httplib import HTTPConnection, HTTPSConnection
     from urllib import pathname2url
+
+USER_AGENT = 'dyn-py v0.9.0'
 
 class DynTrafficClient(object):
     """
@@ -226,7 +228,7 @@ class DynTrafficClient(object):
         headers = {
             'Content-Type': self.content_type,
             'API-Version': self.api_version,
-            'User-Agent': 'dyn-py v0.0.1',
+            'User-Agent': USER_AGENT,
         }
 
         if self._token is not None:
@@ -260,3 +262,181 @@ class DynTrafficClient(object):
 
         return args
 
+
+class DynMessagingClient(object):
+    """
+    A class for interacting with the Dyn Messaging REST API.
+
+    @ivar host: The host to connect to (defaults to emailapi.dynect.net)
+    @type host: C{str}
+
+    @ivar port: The port to connect to (defaults to 443)
+    @type port: C{int}
+
+    @ivar ssl: A boolean indicating whether or not to use SSL encryption
+    (defaults to True)
+    @type ssl: C{bool}
+    """
+
+    def __init__(
+        self, host='emailapi.dynect.net', port=443, ssl=True, apikey=None
+    ):
+        """
+        Basic initializer method
+
+        @param host: The host to connect to
+        @type host: C{str}
+        @param port: The port to connect to
+        @type port: C{int}
+        @param ssl: A boolean indicating whether or not to use SSL encryption
+        @type ssl: C{bool}
+        """
+        self.host = host
+        self.port = port
+        self.ssl = ssl
+
+        self.verbose = True
+        self.content_type = "application/x-www-form-urlencoded"
+
+        self._apikey = apikey
+        self._conn = None
+        self._valid_methods = set(('GET', 'POST'))
+
+    def _debug(self, msg):
+        """
+        Debug output.
+        """
+        if self.verbose:
+            sys.stderr.write(msg)
+
+    def connect(self):
+        """
+        Establishes a connection to the REST API server as defined by the host,
+        port and ssl instance variables
+        """
+        self._conn = None
+
+        if self.ssl:
+            msg = "Establishing SSL connection to %s:%s\n" % (
+                self.host, self.port
+            )
+            self._debug(msg)
+            self._conn = HTTPSConnection(self.host, self.port)
+
+        else:
+            msg = "Establishing unencrypted connection to %s:%s\n" % (
+                self.host, self.port
+            )
+            self._debug(msg)
+            self._conn = HTTPConnection(self.host, self.port)
+
+    def execute(self, uri, method, args = None):
+        """
+        Execute a commands against the rest server
+
+        @param uri: The uri of the resource to access.  /rest/ will be prepended
+        if it is not at the beginning of the uri.
+        @type uri: C{str}
+
+        @param method: One of 'GET', or 'POST'
+        @type method: C{str}
+
+        @param args: Any arguments to be sent as a part of the request
+        @type args: C{dict}
+        """
+        if self._conn == None:
+            self._debug("No established connection\n")
+            self.connect()
+
+        # Make sure the command is prefixed by '/REST/'
+        if not uri.startswith('/rest/json'):
+            uri = '/rest/json' + uri
+
+        # Make sure the method is valid
+        if method.upper() not in self._valid_methods:
+            msg = "%s is not a valid HTTP method for this service.  Please use one of %s" % (
+                method, ", ".join(self._valid_methods)
+            )
+            raise ValueError(msg)
+
+        # Prepare arguments
+        if args is None:
+            args = {}
+
+        if not 'apikey' in args:
+            args['apikey'] = self._apikey
+
+        args = self.format_arguments(args)
+
+        self._debug("uri: %s, method: %s, args: %s\n" % (uri, method, args))
+
+        # Send the command and deal with results
+        self.send_command(uri, method, args)
+
+        # Deal with the results
+        response = self._conn.getresponse()
+        body = response.read()
+        try:
+            body_json=json.loads(body.decode('UTF-8'))
+            if ('response' in body_json) and ('status' in body_json['response']) and (body_json['response']['status'] == 200):
+                self._debug("Response: Success\n")
+                return body_json['response']['data']
+            else:
+                self._debug("Response: %s\n" % (body))
+                return body_json
+        except Exception, response_err:
+            self._debug("Response: %s\n" % (response_err))
+            raise response_err
+
+
+    def send_command(self, uri, method, args):
+        """
+        Responsible for packaging up the API request and sending it to the 
+        server over the established connection
+
+        @param uri: The uri of the resource to interact with
+        @type uri: C{str}
+
+        @param method: The HTTP method to use
+        @type method: C{str}
+
+        @param args: Encoded arguments to send to the server
+        @type args: C{str}
+        """
+        if '%' not in uri:
+            uri = pathname2url(uri)
+
+        if method == 'GET':
+          self._conn.putrequest(method, uri + "?" + args)
+          args = ""
+        elif method == 'POST':
+          self._conn.putrequest(method, uri)
+        else:
+          raise ValueError("unsupported HTTP method: " + method)
+
+        # Build headers
+        headers = {
+            'Content-Type': self.content_type,
+            'User-Agent': USER_AGENT,
+        }
+
+        for key, val in headers.items():
+            self._conn.putheader(key, val)
+
+        # Now the arguments
+        self._conn.putheader('Content-length', '%d' % len(args))
+        self._conn.endheaders()
+        self._conn.send(bytes(args))
+
+    def format_arguments(self, args):
+        """
+        Converts the argument dictionary to the format needed to transmit the 
+        REST request.
+
+        @param args: Arguments to be passed to the REST call
+        @type args: C{dict}
+
+        @return: The encoded string to send in the REST request body
+        @rtype: C{str}
+        """
+        return urllib.urlencode(args)
