@@ -2,7 +2,7 @@ import os
 from distutils.core import setup
 
 # sync with __init__.py
-version = '0.99'
+version = '1.0'
 
 setup(
     name="dyn-python",
