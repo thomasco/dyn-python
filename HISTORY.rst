@@ -1,5 +1,10 @@
 Release History
 ---------------
+1.1.0 (2014-08-25)
+++++++++++++++++++
+
+* Internally improved Python2/3 compaability with the intoduction of the dyn.compat module
+
 1.0.1 (2014-08-06)
 ++++++++++++++++++
 
